@@ -1,0 +1,54 @@
+<odoo>
+    <!-- list VIEW -->
+    <record id="view_sales_target_list" model="ir.ui.view">
+        <field name="name">sales.target.list</field>
+        <field name="model">sales.target</field>
+        <field name="arch" type="xml">
+            <list string="Sales Target">
+                <field name="name" />
+                <field name="salesperson_id" />
+                <field name="responsible_id" />
+                <field name="target_point" />
+                <field name="start_date" />
+                <field name="end_date" />
+                <field name="target_amount" />
+                <field name="achievement_amount" />
+                <field name="achievement_percent" />
+                <field name="state" />
+                <field name="company_id" />
+            </list>
+        </field>
+    </record>
+
+    <!-- FORM VIEW -->
+    <record id="view_sales_target_form" model="ir.ui.view">
+        <field name="name">sales.target.form</field>
+        <field name="model">sales.target</field>
+        <field name="arch" type="xml">
+            <form string="Sales Target">
+                <sheet>
+                    <group>
+                        <field name="name" />
+                        <field name="salesperson_id" />
+                        <field name="responsible_id" />
+                        <field name="target_point" />
+                        <field name="start_date" />
+                        <field name="end_date" />
+                        <field name="target_amount" />
+                        <field name="achievement_amount" readonly="1" />
+                        <field name="achievement_percent" readonly="1" />
+                        <field name="state" />
+                        <field name="company_id" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_sales_target" model="ir.actions.act_window">
+        <field name="name">Salesperson Sales Target</field>
+        <field name="res_model">sales.target</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

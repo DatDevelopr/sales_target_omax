@@ -1,0 +1,13 @@
+<odoo>
+    <!-- Root Menu -->
+    <menuitem id="menu_sales_target_root"
+              name="Sales Target"
+              parent="sale.sale_menu_root"
+              sequence="20"/>
+
+    <!-- Sub Menu -->
+    <menuitem id="menu_sales_target"
+              name="Salesperson Sales Target"
+              parent="menu_sales_target_root"
+              action="action_sales_target"/>
+</odoo>
