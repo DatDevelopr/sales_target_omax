@@ -165,16 +165,38 @@ class SalesTarget(models.Model):
             record.theoretical_amount = record.target_amount * 0.5
             record.theoretical_percent = 50
     def action_confirm(self):
-        """Chuyển từ draft -> open"""
+
         for record in self:
             record.state = 'open'
 
     def action_close(self):
-        """Đóng target (open -> closed)"""
+
         for record in self:
             record.state = 'closed'
 
-    def action_reset_to_draft(self):
-        """Đưa về draft"""
-        for record in self:
-            record.state = 'draft'
+    def action_send_mail(self):
+        self.ensure_one()
+        template = self.env.ref('sales_target_omax.email_template_sales_target')
+        compose_form = self.env.ref('mail.email_compose_message_wizard_form', False)
+
+        ctx = {
+            'default_model': 'sales.target',  # Model của bạn
+            'default_res_ids': [self.id],     # <-- Sửa ở đây
+            'default_use_template': bool(template.id),
+            'default_template_id': template.id,
+            'default_composition_mode': 'comment',
+        }
+
+        return {
+            'name': 'Send Mail',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(compose_form.id, 'form')],
+            'target': 'new',
+            'context': ctx,
+        }
+
+
+    def action_set_draft(self):
+        self.write({'state': 'draft'})

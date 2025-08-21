@@ -27,26 +27,41 @@
             <form string="Salesperson Sales Target">
                 <header>
                     <button name="action_confirm"
-                            type="object"
-                            string="Confirm"
-                            states="draft"
-                            class="btn-primary"/>
-
+                        type="object"
+                        string="Confirm"
+                        class="btn-primary"
+                        invisible="state != 'draft'"/>
+                    <button name="action_send_mail"
+                        type="object"
+                        string="Send Mail"
+                        class="btn-primary"
+                        invisible="state != 'open'"/>
+                    <button name="action_set_draft"
+                        type="object"
+                        string="Set to Draft"
+                        class="btn-primary"
+                        invisible="state != 'open'"/>
+                    <button name="action_confirm"
+                        type="object"
+                        string="Set to Open"
+                        class="btn-primary"
+                        invisible="state != 'closed'"/>
                     <button name="action_close"
-                            type="object"
-                            string="Close"
-                            states="open"
-                            class="btn-secondary"/>
+                        type="object"
+                        string="Close"
+                        class="btn-primary"
+                        invisible="state != 'open'"/>
+
                     <field name="state" widget="statusbar"
-                           statusbar_visible="draft,open,closed"
-                           statusbar_status="state"/>
+                        statusbar_visible="draft,open,closed"
+                        statusbar_status="state"/>
                 </header>
 
                 <sheet>
                     <group>
                         <!-- LEFT SIDE -->
                         <group>
-                            <field name="salesperson_id"/>
+                            <field name="salesperson_id" modifiers="{'readonly': [('state','!=','open')]}"/>
                             <field name="start_date"/>
                             <field name="end_date"/>
                             <field name="responsible_id"/>

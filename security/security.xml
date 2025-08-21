@@ -1,0 +1,15 @@
+<odoo>
+
+        <!-- Nhóm quản trị Sales Target -->
+        <record id="group_sales_target_manager" model="res.groups">
+            <field name="name">Sales Target Manager</field>
+            <field name="category_id" ref="base.module_category_sales_management"/>
+            <field name="implied_ids" eval="[(4, ref('sales_target_omax.group_sales_target_user'))]"/>
+        </record>
+
+        <!-- Nhóm nhân viên Sales Target -->
+        <record id="group_sales_target_user" model="res.groups">
+            <field name="name">Sales Target User</field>
+            <field name="category_id" ref="base.module_category_sales_management"/>
+        </record>
+</odoo>

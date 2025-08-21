@@ -1,0 +1,40 @@
+<odoo>
+    <data>
+
+        <!-- Sales Target Email Template -->
+        <record id="email_template_sales_target" model="mail.template">
+            <field name="name">Sales Target Email Template</field>
+            <field name="model_id" ref="sales_target_omax.model_sales_target"/>
+            <field name="subject">Your SalesTeam Target Details For ${object.name}</field>
+            <field name="email_from">${(user.email_formatted or '')|safe}</field>
+            <field name="email_to">${object.salesperson_id.email|safe}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html"><![CDATA[
+<p>Hello <b>${object.salesperson_id.name}</b>,</p>
+
+<p><b>Your SalesTeam Target Details :</b></p>
+
+<p>
+<b>Target Ref :</b> ${object.name}<br/>
+<b>SalesTeam :</b> ${object.sales_team_id.name}<br/>
+<b>Responsible :</b> ${object.responsible_id.name}<br/>
+<b>Start Date :</b> ${object.start_date}<br/>
+<b>End Date :</b> ${object.end_date}<br/>
+<b>Target Point :</b> ${object.target_point}<br/>
+</p>
+
+<p>
+<b>Target Amount :</b> $ ${object.target_amount}<br/>
+<b>Target Achieved :</b> $ ${object.target_achieved}<br/>
+<b>Difference :</b> $ ${object.difference}<br/>
+<b>Target Achieved (in %) :</b> ${object.target_achieved_per}<br/>
+<b>Status :</b> ${object.state}<br/>
+</p>
+
+<p>Thanks,<br/>
+OMAX Informatics</p>
+            ]]></field>
+        </record>
+
+    </data>
+</odoo>
