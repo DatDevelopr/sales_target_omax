@@ -22,12 +22,15 @@ Long description of module's purpose
 
     # always loaded
     'data': [
-        'security/security.xml',
         'security/ir.model.access.csv',
-        'security/record_rules.xml',
+        # 'security/record_rules.xml',
         'data/mail_template.xml',
+        
         'views/menu.xml',
         'views/sales_target_views.xml',
+
+        'data/ir_sequence.xml',
+        'views/sales_team_target_views.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

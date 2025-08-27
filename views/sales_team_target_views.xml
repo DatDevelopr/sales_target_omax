@@ -1,0 +1,76 @@
+<odoo>
+    <!-- list View -->
+    <record id="view_sales_team_target_list" model="ir.ui.view">
+        <field name="name">sales.team.target.list</field>
+        <field name="model">sales.team.target</field>
+        <field name="arch" type="xml">
+            <list string="Sales Team Sales Target">
+                <field name="name"/>
+                <field name="team_id"/>
+                <field name="user_id"/>
+                <field name="target_point"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="target"/>
+                <field name="achievement"/>
+                <field name="achievement_percentage"/>
+                <field name="status"/>
+                <field name="company_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_sales_team_target_form" model="ir.ui.view">
+        <field name="name">sales.team.target.form</field>
+        <field name="model">sales.team.target</field>
+        <field name="arch" type="xml">
+            <form string="Sales Team Sales Target">
+                <header>
+                    <button name="action_draft" type="object" string="Draft" states="open,closed"/>
+                    <button name="action_open" type="object" string="Open" states="draft"/>
+                    <button name="action_close" type="object" string="Closed" states="open"/>
+                    <field name="status" widget="statusbar" statusbar_visible="draft,open,closed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="team_id"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="user_id"/>
+                            <field name="company_id"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group>
+                            <field name="target_point"/>
+                            <field name="target"/>
+                            <field name="achievement" readonly="1"/>
+                            <field name="difference" readonly="1"/>
+                            <field name="achievement_percentage" widget="percentpie" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Theoretical Data">
+                            <group>
+                                <field name="theoretical_achievement"/>
+                                <field name="theoretical_percentage" widget="percentpie"/>
+                                <field name="theoretical_status"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_sales_team_target" model="ir.actions.act_window">
+        <field name="name">SalesTeam Sales Target</field>
+        <field name="res_model">sales.team.target</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

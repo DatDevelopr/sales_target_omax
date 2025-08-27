@@ -1,0 +1,11 @@
+<odoo>
+    <!-- Sequence for Sales Team Target -->
+    <record id="seq_sales_team_target" model="ir.sequence">
+        <field name="name">Sales Team Target</field>
+        <field name="code">sales.team.target</field>
+        <field name="prefix">STT</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>
