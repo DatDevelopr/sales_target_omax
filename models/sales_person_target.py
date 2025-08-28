@@ -107,6 +107,7 @@ class SalesTarget(models.Model):
     # ======================
     # COMPUTE METHODS
     # ======================
+
     @api.depends('target_amount', 'salesperson_id', 'start_date', 'end_date', 'target_point')
     def _compute_achievement(self):
         """Tính Achievement dựa theo Target Point"""

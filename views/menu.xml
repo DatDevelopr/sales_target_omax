@@ -10,8 +10,10 @@
               name="Salesperson Sales Target"
               parent="menu_sales_target_root"
               action="action_sales_target"/>
-    <menuitem id="menu_sales_team_target"
-              name="SalesTeam Sales Target"
-              parent="menu_sales_target_root"
-              action="action_sales_team_target"/>
+        
+    <menuitem id="menu_sales_team_target" 
+        name="SalesTeam Sales Target" 
+        parent="menu_sales_target_root" 
+        action="action_sales_team_target"/>
+
 </odoo>

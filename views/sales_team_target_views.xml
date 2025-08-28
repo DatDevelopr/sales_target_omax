@@ -1,5 +1,5 @@
 <odoo>
-    <!-- list View -->
+    <!-- List View -->
     <record id="view_sales_team_target_list" model="ir.ui.view">
         <field name="name">sales.team.target.list</field>
         <field name="model">sales.team.target</field>
@@ -9,12 +9,10 @@
                 <field name="team_id"/>
                 <field name="user_id"/>
                 <field name="target_point"/>
-                <field name="start_date"/>
-                <field name="end_date"/>
                 <field name="target"/>
                 <field name="achievement"/>
                 <field name="achievement_percentage"/>
-                <field name="status"/>
+                <field name="state"/>
                 <field name="company_id"/>
             </list>
         </field>
@@ -27,15 +25,51 @@
         <field name="arch" type="xml">
             <form string="Sales Team Sales Target">
                 <header>
-                    <button name="action_draft" type="object" string="Draft" states="open,closed"/>
-                    <button name="action_open" type="object" string="Open" states="draft"/>
-                    <button name="action_close" type="object" string="Closed" states="open"/>
-                    <field name="status" widget="statusbar" statusbar_visible="draft,open,closed"/>
+                    <button name="action_confirm"
+                        type="object"
+                        string="Confirm"
+                        class="btn-primary"
+                        invisible="state != 'draft'"/>
+
+                    <button name="action_send_mail"
+                        type="object"
+                        string="Send Mail"
+                        class="btn-primary"
+                        invisible="state != 'open'"/>
+
+                    <button name="action_set_draft"
+                        type="object"
+                        string="Set to Draft"
+                        class="btn-primary"
+                        invisible="state != 'open'"/>
+
+                    <button name="action_confirm"
+                        type="object"
+                        string="Set to Open"
+                        class="btn-primary"
+                        invisible="state != 'closed'"/>
+
+                    <button name="action_close"
+                        type="object"
+                        string="Close"
+                        class="btn-primary"
+                        invisible="state != 'open'"/>
+
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,open,closed"
+                        statusbar_status="state"/>
                 </header>
+
+
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
                     <group>
                         <group>
-                            <field name="name" readonly="1"/>
                             <field name="team_id"/>
                             <field name="start_date"/>
                             <field name="end_date"/>
@@ -68,9 +102,9 @@
 
     <!-- Action -->
     <record id="action_sales_team_target" model="ir.actions.act_window">
-        <field name="name">SalesTeam Sales Target</field>
+        <field name="name">Sales Team Sales Target</field>
         <field name="res_model">sales.team.target</field>
         <field name="view_mode">list,form</field>
     </record>
 
-</odoo>
+    </odoo>

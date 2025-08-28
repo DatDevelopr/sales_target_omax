@@ -1,5 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sales_team_target_user,sales.team.target.user,model_sales_team_target,base.group_user,1,0,0,0
-access_sales_team_target_manager,sales.team.target.manager,model_sales_team_target,base.group_sale_manager,1,1,1,1
-access_salesperson_target_user,salesperson.target.user,model_salesperson_target,base.group_user,1,0,0,0
-access_salesperson_target_manager,salesperson.target.manager,model_salesperson_target,base.group_sale_manager,1,1,1,1
+access_sales_team_target_user,sales.team.target.user,model_sales_team_target,sales_team.group_sale_salesman,1,0,0,0
+access_sales_team_target_manager,sales.team.target.manager,model_sales_team_target,sales_team.group_sale_manager,1,1,1,1
+access_salesperson_target_user,salesperson.target.user,model_sales_target,sales_team.group_sale_salesman,1,0,0,0
+access_salesperson_target_manager,salesperson.target.manager,model_sales_target,sales_team.group_sale_manager,1,1,1,1

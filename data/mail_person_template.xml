@@ -16,7 +16,7 @@
 
 <p>
 <b>Target Ref :</b> ${object.name}<br/>
-<b>SalesTeam :</b> ${object.sales_team_id.name}<br/>
+<b>Salesperson :</b> ${object.sales_team_id.name}<br/>
 <b>Responsible :</b> ${object.responsible_id.name}<br/>
 <b>Start Date :</b> ${object.start_date}<br/>
 <b>End Date :</b> ${object.end_date}<br/>

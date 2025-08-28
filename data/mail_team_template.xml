@@ -1,0 +1,34 @@
+<odoo>
+    <data>
+        <record id="email_template_sales_team_target" model="mail.template">
+            <field name="name">Sales Target Email Template</field>
+            <field name="model_id" ref="sales_target_omax.model_sales_team_target"/>
+            <field name="subject">Your SalesTeam Target Details For ${object.name or 'N/A'}</field>
+            <field name="email_from">${(user.email_formatted or '')|safe}</field>
+            <field name="email_to">${object.user_id.email if object.user_id else ''|safe}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html"><![CDATA[
+<p>Hello <b>${object.user_id.name if object.user_id else 'User'}</b>,</p>
+
+<p><b>Your SalesTeam Target Details :</b></p>
+
+<ul>
+    <li><b>Target Ref :</b> ${object.name or 'N/A'}</li>
+    <li><b>SalesTeam :</b> ${object.team_id.name if object.team_id else 'N/A'}</li>
+    <li><b>Responsible :</b> ${object.user_id.name if object.user_id else 'N/A'}</li>
+    <li><b>Start Date :</b> ${object.start_date or 'N/A'}</li>
+    <li><b>End Date :</b> ${object.end_date or 'N/A'}</li>
+    <li><b>Target Point :</b> ${object.target_point or '0'}</li>
+    <li><b>Target Amount :</b> $ ${object.target or '0'}</li>
+    <li><b>Target Achieved :</b> $ ${object.achievement or '0'}</li>
+    <li><b>Difference :</b> $ ${object.difference or '0'}</li>
+    <li><b>Target Achieved (%) :</b> ${object.achievement_percentage or '0'}%</li>
+    <li><b>Status :</b> ${object.state or 'N/A'}</li>
+</ul>
+
+<p>Thanks,<br/>
+OMAX Informatics</p>
+            ]]></field>
+        </record>
+    </data>
+</odoo>
