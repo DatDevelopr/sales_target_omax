@@ -19,6 +19,7 @@
         </field>
     </record>
 
+
     <!-- FORM VIEW -->
     <record id="view_sales_target_form" model="ir.ui.view">
         <field name="name">sales.target.form</field>
@@ -34,23 +35,18 @@
                     <button name="action_send_mail"
                         type="object"
                         string="Send Mail"
-                        class="btn-primary"
-                        invisible="state != 'open'"/>
-                    <button name="action_set_draft"
-                        type="object"
-                        string="Set to Draft"
-                        class="btn-primary"
-                        invisible="state != 'open'"/>
-                    <button name="action_confirm"
-                        type="object"
-                        string="Set to Open"
-                        class="btn-primary"
-                        invisible="state != 'closed'"/>
+                        class="btn-info"
+                        invisible="state == 'draft'"/>
                     <button name="action_close"
                         type="object"
                         string="Close"
-                        class="btn-primary"
+                        class="btn-secondary"
                         invisible="state != 'open'"/>
+                    <button name="action_set_draft"
+                        type="object"
+                        string="Reset to Draft"
+                        class="btn-light"
+                        invisible="state == 'draft'"/>
 
                     <field name="state" widget="statusbar"
                         statusbar_visible="draft,open,closed"
@@ -58,21 +54,26 @@
                 </header>
 
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
                     <group>
                         <!-- LEFT SIDE -->
                         <group>
-                            <field name="salesperson_id" modifiers="{'readonly': [('state','!=','open')]}"/>
-                            <field name="start_date"/>
-                            <field name="end_date"/>
-                            <field name="responsible_id"/>
-                            <field name="company_id"/>
-                            <field name="currency_id"/>
+                            <field name="salesperson_id" modifiers="{'readonly': [('state','!=','draft')]}"/>
+                            <field name="start_date" modifiers="{'readonly': [('state','!=','open')]}"/>
+                            <field name="end_date" modifiers="{'readonly': [('state','!=','draft')]}"/>
+                            <field name="responsible_id" modifiers="{'readonly': [('state','!=','draft')]}"/>
+                            <field name="company_id" modifiers="{'readonly': [('state','!=','draft')]}"/>
+                            <field name="currency_id" modifiers="{'readonly': [('state','!=','draft')]}"/>
                         </group>
 
                         <!-- RIGHT SIDE -->
                         <group>
-                            <field name="target_point"/>
-                            <field name="target_amount"/>
+                            <field name="target_point" modifiers="{'readonly': [('state','!=','draft')]}"/>
+                            <field name="target_amount" modifiers="{'readonly': [('state','!=','draft')]}"/>
                             <field name="achievement_amount" readonly="1"/>
                             <field name="difference_amount" readonly="1"/>
                             <field name="achievement_percent" readonly="1"/>
@@ -83,17 +84,51 @@
                         <field name="theoretical_amount" readonly="1"/>
                         <field name="theoretical_percent" readonly="1"/>
                     </group>
+
                     <notebook>
-                        <page string="Sales Orders">
-                            <list editable="bottom">
-                                <field name="name"/>
-                            </list>
+                        <page string="Sales Orders" invisible="target_point != 'so_confirm'">
+                            <field name="order_ids" nolabel="1" readonly="1" create="false" edit="false" delete="false">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date_order"/>
+                                    <field name="partner_id"/>
+                                    <field name="company_id"/>
+                                    <field name="amount_total"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                            <group>
+                                <field name="sale_total" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <page string="Invoices" invisible="target_point != 'invoice_validation'">
+                            <field name="invoice_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="invoice_date"/>
+                                    <field name="amount_total"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Payments" invisible="target_point != 'invoice_paid'">
+                            <field name="payment_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="amount"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>
             </form>
         </field>
     </record>
+
 
     <!-- ACTION -->
     <record id="action_sales_target" model="ir.actions.act_window">

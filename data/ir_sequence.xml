@@ -8,4 +8,11 @@
         <field name="number_next">1</field>
         <field name="company_id" eval="False"/>
     </record>
+        <record id="seq_sales_target" model="ir.sequence">
+        <field name="name">Sales Target</field>
+        <field name="code">sales.target</field>
+        <field name="prefix">SPT</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>
