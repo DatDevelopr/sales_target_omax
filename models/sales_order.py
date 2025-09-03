@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
@@ -14,6 +14,31 @@ class SaleOrder(models.Model):
         for order in self:
             self.env['sales.target'].sudo()._update_achievement(order, 'so_confirm')
         return res
+
+    @api.model
+    def create(self, vals):
+        # tạo đơn hàng trước
+        order = super(SaleOrder, self).create(vals)
+
+        # xác định nhân viên bán hàng và ngày đơn hàng
+        salesperson = order.user_id
+        order_date = order.date_order or fields.Datetime.now()
+
+        if salesperson and order_date:
+            month = order_date.month
+            year = order_date.year
+
+            # tìm Sales Target đúng người & tháng
+            target = self.env["sales.target"].search([
+                ("salesperson_id", "=", salesperson.id),
+                ("month", "=", month),
+                ("year", "=", year),
+            ], limit=1)
+
+            if target:
+                order.sales_target_id = target
+
+        return order
     
 class AccountMove(models.Model):
     _inherit = 'account.move'
