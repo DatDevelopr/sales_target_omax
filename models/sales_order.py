@@ -17,32 +17,30 @@ class SaleOrder(models.Model):
 
     @api.model
     def create(self, vals):
-        # tạo đơn hàng trước
-        order = super(SaleOrder, self).create(vals)
 
-        # xác định nhân viên bán hàng và ngày đơn hàng
+        order = super(SaleOrder, self).create(vals)
+        
         salesperson = order.user_id
         order_date = order.date_order or fields.Datetime.now()
-
+        
         if salesperson and order_date:
-            month = order_date.month
-            year = order_date.year
-
-            # tìm Sales Target đúng người & tháng
+            
             target = self.env["sales.target"].search([
                 ("salesperson_id", "=", salesperson.id),
-                ("month", "=", month),
-                ("year", "=", year),
+                ("start_date", "<=", order_date.date()),
+                ("end_date", ">=", order_date.date()),
+                ("state", "=", "open"),
+                ("target_point", "=", "so_confirm"),
             ], limit=1)
-
+            
             if target:
-                order.sales_target_id = target
+                order.sales_target_id = target.id
+        return order 
 
-        return order
-    
 class AccountMove(models.Model):
     _inherit = 'account.move'
-    sales_target_id = fields.Many2one('sales.target', string="Sales Target")
+
+    sales_target_id = fields.Many2one('sales.target', string="Sales Target", ondelete="set null")
 
     def action_post(self):
         res = super().action_post()
@@ -56,7 +54,44 @@ class AccountMove(models.Model):
             self.env['sales.target'].sudo()._update_achievement(inv, 'invoice_paid')
         return res
     
+    def _assign_sales_target(self):
+        for inv in self:
+            if not inv.invoice_user_id or not inv.invoice_date:
+                continue
+
+            target = self.env["sales.target"].search([
+                ("salesperson_id", "=", inv.invoice_user_id.id),
+                ("start_date", "<=", inv.invoice_date),
+                ("end_date", ">=", inv.invoice_date),
+                ("state", "=", "open"),
+                ("target_point", "in", ["invoice_validation", "invoice_paid"]),
+            ], limit=1)
+
+            if target:
+                inv.sales_target_id = target.id
+                
+    @api.model
+    def create(self, vals):
+        record = super().create(vals)
+        record._assign_sales_target()
+        return record
+    
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
 
     sales_target_id = fields.Many2one('sales.target', string="Sales Target")
+
+    def action_post(self):
+        res = super().action_post()
+        for pay in self:
+            if pay.partner_id and pay.date and pay.sales_target_id is None:
+                target = self.env["sales.target"].search([
+                    ("salesperson_id", "=", pay.create_uid.id),  # hoặc user_id nếu có
+                    ("start_date", "<=", pay.date),
+                    ("end_date", ">=", pay.date),
+                    ("state", "=", "open"),
+                    ("target_point", "=", "invoice_paid"),
+                ], limit=1)
+                if target:
+                    pay.sales_target_id = target.id
+        return res

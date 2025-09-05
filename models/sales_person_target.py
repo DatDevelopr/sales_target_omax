@@ -136,20 +136,6 @@ class SalesTarget(models.Model):
     # ======================
     # COMPUTE METHODS
     # ======================
-    
-    @api.model
-    def create(self, vals):
-        order = super().create(vals)
-        # Tìm target phù hợp
-        target = self.env["salesperson.sales.target"].search([
-            ("salesperson_id", "=", order.user_id.id),
-            ("start_date", "<=", order.date_order),
-            ("end_date", ">=", order.date_order),
-            ("state", "=", "open"),
-        ], limit=1)
-        if target:
-            order.sales_target_id = target.id
-        return order
 
     @api.depends('target_amount', 'salesperson_id', 'start_date', 'end_date', 'target_point')
     def _compute_achievement(self):
@@ -255,7 +241,7 @@ class SalesTarget(models.Model):
         date_field = getattr(record, 'date_order', getattr(record, 'invoice_date', False))
         user_field = getattr(record, 'user_id', getattr(record, 'invoice_user_id', False))
 
-        if not date_field or not user_field:
+        if not date_field or not user_field: 
             return
 
         targets = self.search([

@@ -87,7 +87,7 @@
 
                     <notebook>
                         <page string="Sales Orders" invisible="target_point != 'so_confirm'">
-                            <field name="order_ids" nolabel="1" readonly="1" create="false" edit="false" delete="false">
+                            <field name="order_ids" readonly="1" create="false" edit="false" delete="false">
                                 <list>
                                     <field name="name"/>
                                     <field name="date_order"/>
@@ -103,18 +103,21 @@
                         </page>
 
                         <page string="Invoices" invisible="target_point != 'invoice_validation'">
-                            <field name="invoice_ids">
+                            <field name="invoice_ids" readonly="1" create="false" edit="false" delete="false">
                                 <list>
                                     <field name="name"/>
+                                    <field name="partner_id"/>
                                     <field name="invoice_date"/>
+                                    <field name="amount_untaxed"/>
                                     <field name="amount_total"/>
+                                    <field name="payment_state"/>
                                     <field name="state"/>
                                 </list>
                             </field>
                         </page>
 
                         <page string="Payments" invisible="target_point != 'invoice_paid'">
-                            <field name="payment_ids">
+                            <field name="payment_ids" readonly="1" create="false" edit="false" delete="false">
                                 <list>
                                     <field name="name"/>
                                     <field name="date"/>
