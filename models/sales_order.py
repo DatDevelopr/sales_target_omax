@@ -42,6 +42,19 @@ class AccountMove(models.Model):
 
     sales_target_id = fields.Many2one('sales.target', string="Sales Target", ondelete="set null")
 
+    @api.model
+    def create(self, vals):
+        record = super().create(vals)
+        record._assign_sales_target()
+        return record
+    
+    def write(self, vals):
+        res = super().write(vals)
+        if any(field in vals for field in ["invoice_user_id", "invoice_date"]):
+            for rec in self:
+                rec._assign_sales_target()
+        return res
+    
     def action_post(self):
         res = super().action_post()
         for inv in self:
@@ -68,13 +81,7 @@ class AccountMove(models.Model):
             ], limit=1)
 
             if target:
-                inv.sales_target_id = target.id
-                
-    @api.model
-    def create(self, vals):
-        record = super().create(vals)
-        record._assign_sales_target()
-        return record
+                inv.sales_target_id = target.id           
     
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
@@ -84,14 +91,26 @@ class AccountPayment(models.Model):
     def action_post(self):
         res = super().action_post()
         for pay in self:
-            if pay.partner_id and pay.date and pay.sales_target_id is None:
-                target = self.env["sales.target"].search([
-                    ("salesperson_id", "=", pay.create_uid.id),  # hoặc user_id nếu có
-                    ("start_date", "<=", pay.date),
-                    ("end_date", ">=", pay.date),
-                    ("state", "=", "open"),
-                    ("target_point", "=", "invoice_paid"),
-                ], limit=1)
-                if target:
-                    pay.sales_target_id = target.id
+            pay._assign_sales_target()
+            # Nếu payment liên quan đến target "invoice_paid"
+            if pay.sales_target_id and pay.sales_target_id.target_point == "invoice_paid":
+                self.env['sales.target'].sudo()._update_achievement(pay, 'invoice_paid')
         return res
+
+    def _assign_sales_target(self):
+        """Tìm sales.target phù hợp cho Payment"""
+        for pay in self:
+            salesperson = pay.create_uid  # mặc định lấy user tạo payment
+            if not salesperson or not pay.date:
+                continue
+
+            target = self.env["sales.target"].search([
+                ("salesperson_id", "=", salesperson.id),
+                ("start_date", "<=", pay.date),
+                ("end_date", ">=", pay.date),
+                ("state", "=", "open"),
+                ("target_point", "=", "invoice_paid"),
+            ], limit=1)
+
+            if target:
+                pay.sales_target_id = target.id

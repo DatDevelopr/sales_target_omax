@@ -54,18 +54,27 @@ class SalesTarget(models.Model):
     sale_total = fields.Monetary(
         compute="_compute_sale_total", string="Total Sales", currency_field="currency_id"
     )
-    currency_id = fields.Many2one("res.currency", default=lambda self: self.env.company.currency_id)
-
-
+    
     invoice_ids = fields.One2many(
         'account.move',   # model invoice
         'sales_target_id',   # field Many2one bên invoice (cần thêm)
         string="Invoices"
     )
+    invoice_total = fields.Monetary(
+        compute="_compute_invoice_total", 
+        string="Total Invoices", 
+        currency_field="currency_id"
+    )
+
     payment_ids = fields.One2many(
         'account.payment',
         'sales_target_id',
         string='Payments'
+    )
+    payment_total = fields.Monetary(
+        compute="_compute_payment_total",
+        string="Total Payments",
+        currency_field="currency_id"
     )
 
     # ======================
@@ -177,6 +186,16 @@ class SalesTarget(models.Model):
     def _compute_sale_total(self):
         for rec in self:
             rec.sale_total = sum(rec.order_ids.mapped("amount_total"))
+    
+    @api.depends("invoice_ids.amount_total")
+    def _compute_invoice_total(self):
+        for rec in self:
+            rec.invoice_total = sum(rec.invoice_ids.mapped("amount_total"))
+
+    @api.depends("payment_ids.amount")
+    def _compute_payment_total(self):
+        for rec in self:
+            rec.payment_total = sum(rec.payment_ids.mapped("amount"))
 
     @api.depends('target_amount', 'achievement_amount')
     def _compute_difference(self):
@@ -237,9 +256,14 @@ class SalesTarget(models.Model):
     # ACTION METHODS
     # ======================
     def _update_achievement(self, record, point_type):
-        """Hàm cập nhật Achievement khi có sự kiện xảy ra"""
-        date_field = getattr(record, 'date_order', getattr(record, 'invoice_date', False))
-        user_field = getattr(record, 'user_id', getattr(record, 'invoice_user_id', False))
+        if point_type == "invoice_paid" and record._name == "account.payment":
+            date_field = record.date
+            user_field = record.create_uid
+            amount = record.amount
+        else:
+            date_field = getattr(record, 'date_order', getattr(record, 'invoice_date', False))
+            user_field = getattr(record, 'user_id', getattr(record, 'invoice_user_id', False))
+            amount = getattr(record, 'amount_total', 0)
 
         if not date_field or not user_field: 
             return
@@ -252,7 +276,7 @@ class SalesTarget(models.Model):
             ('state', '=', 'open')
         ])
         for target in targets:
-            amount = record.amount_total
+            
             target.achievement_amount += amount
             target.difference_amount = target.target_amount - target.achievement_amount
             target.achievement_percent = (target.achievement_amount / target.target_amount) * 100 if target.target_amount else 0

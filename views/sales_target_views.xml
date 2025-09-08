@@ -114,6 +114,9 @@
                                     <field name="state"/>
                                 </list>
                             </field>
+                            <group>
+                                <field name="invoice_total" readonly="1"/>
+                            </group>
                         </page>
 
                         <page string="Payments" invisible="target_point != 'invoice_paid'">
