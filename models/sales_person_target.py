@@ -58,25 +58,16 @@ class SalesTarget(models.Model):
     invoice_ids = fields.One2many(
         'account.move',   # model invoice
         'sales_target_id',   # field Many2one bên invoice (cần thêm)
-        string="Invoices"
+        string="Invoices",
+        compute="_compute_invoice_ids",
+        store=False
     )
     invoice_total = fields.Monetary(
         compute="_compute_invoice_total", 
         string="Total Invoices", 
         currency_field="currency_id"
     )
-
-    payment_ids = fields.One2many(
-        'account.payment',
-        'sales_target_id',
-        string='Payments'
-    )
-    payment_total = fields.Monetary(
-        compute="_compute_payment_total",
-        string="Total Payments",
-        currency_field="currency_id"
-    )
-
+    
     # ======================
     # TARGET INFO
     # ======================
@@ -148,7 +139,7 @@ class SalesTarget(models.Model):
 
     @api.depends('target_amount', 'salesperson_id', 'start_date', 'end_date', 'target_point')
     def _compute_achievement(self):
-        """Tính Achievement dựa theo Target Point"""
+
         for record in self:
             total_sales = 0
             if record.salesperson_id and record.start_date and record.end_date:
@@ -165,6 +156,7 @@ class SalesTarget(models.Model):
                     invoices = self.env['account.move'].search([
                         ('invoice_user_id', '=', record.salesperson_id.id),
                         ('state', '=', 'posted'),
+                        ('payment_state', '!=', 'paid'),
                         ('invoice_date', '>=', record.start_date),
                         ('invoice_date', '<=', record.end_date),
                     ])
@@ -191,16 +183,28 @@ class SalesTarget(models.Model):
     def _compute_invoice_total(self):
         for rec in self:
             rec.invoice_total = sum(rec.invoice_ids.mapped("amount_total"))
-
-    @api.depends("payment_ids.amount")
-    def _compute_payment_total(self):
-        for rec in self:
-            rec.payment_total = sum(rec.payment_ids.mapped("amount"))
-
+    
     @api.depends('target_amount', 'achievement_amount')
     def _compute_difference(self):
         for record in self:
             record.difference_amount = record.target_amount - record.achievement_amount
+            
+    @api.depends('target_point', 'salesperson_id', 'start_date', 'end_date')
+    def _compute_invoice_ids(self):
+        for rec in self:
+            domain = [
+                ('invoice_user_id', '=', rec.salesperson_id.id),
+                ('invoice_date', '>=', rec.start_date),
+                ('invoice_date', '<=', rec.end_date),
+                ('state', '=', 'posted'),
+            ]
+            if rec.target_point == 'invoice_validation':
+                domain.append(('payment_state', '!=', 'paid'))  # chỉ lấy Not Paid
+            elif rec.target_point == 'invoice_paid':
+                domain.append(('payment_state', '=', 'paid'))   # chỉ lấy Paid
+
+            invoices = self.env['account.move'].search(domain)
+            rec.invoice_ids = invoices
 
     def _compute_theoretical(self):
         """Tính Theoretical Achievement dựa trên ngày hiện tại"""
@@ -256,18 +260,16 @@ class SalesTarget(models.Model):
     # ACTION METHODS
     # ======================
     def _update_achievement(self, record, point_type):
-        if point_type == "invoice_paid" and record._name == "account.payment":
-            date_field = record.date
-            user_field = record.create_uid
-            amount = record.amount
-        else:
-            date_field = getattr(record, 'date_order', getattr(record, 'invoice_date', False))
-            user_field = getattr(record, 'user_id', getattr(record, 'invoice_user_id', False))
-            amount = getattr(record, 'amount_total', 0)
+        """Cập nhật achievement khi có Sale Order hoặc Invoice."""
+        # Lấy ngày, người phụ trách và số tiền
+        date_field = getattr(record, 'date_order', getattr(record, 'invoice_date', False))
+        user_field = getattr(record, 'user_id', getattr(record, 'invoice_user_id', False))
+        amount = getattr(record, 'amount_total', 0)
 
-        if not date_field or not user_field: 
+        if not date_field or not user_field:
             return
 
+        # Tìm các sales.target phù hợp
         targets = self.search([
             ('salesperson_id', '=', user_field.id),
             ('target_point', '=', point_type),
@@ -275,11 +277,15 @@ class SalesTarget(models.Model):
             ('end_date', '>=', date_field),
             ('state', '=', 'open')
         ])
+
+        # Cập nhật achievement
         for target in targets:
-            
-            target.achievement_amount += amount
-            target.difference_amount = target.target_amount - target.achievement_amount
-            target.achievement_percent = (target.achievement_amount / target.target_amount) * 100 if target.target_amount else 0
+            new_amount = target.achievement_amount + amount
+            target.write({
+                'achievement_amount': new_amount,
+                'difference_amount': target.target_amount - new_amount,
+                'achievement_percent': (new_amount / target.target_amount * 100) if target.target_amount else 0,
+            })
 
     def _compute_sale_orders(self):
         for rec in self:

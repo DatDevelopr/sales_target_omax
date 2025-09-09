@@ -102,7 +102,8 @@
                             </group>
                         </page>
 
-                        <page string="Invoices" invisible="target_point != 'invoice_validation'">
+                        <page string="Invoices" 
+                            invisible="target_point not in ('invoice_validation','invoice_paid')">
                             <field name="invoice_ids" readonly="1" create="false" edit="false" delete="false">
                                 <list>
                                     <field name="name"/>
@@ -118,17 +119,7 @@
                                 <field name="invoice_total" readonly="1"/>
                             </group>
                         </page>
-
-                        <page string="Payments" invisible="target_point != 'invoice_paid'">
-                            <field name="payment_ids" readonly="1" create="false" edit="false" delete="false">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="date"/>
-                                    <field name="amount"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
-                        </page>
+                    
                     </notebook>
                 </sheet>
             </form>
