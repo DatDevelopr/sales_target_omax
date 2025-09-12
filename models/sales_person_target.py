@@ -52,7 +52,7 @@ class SalesTarget(models.Model):
         compute="_compute_sale_orders",
     )
     sale_total = fields.Monetary(
-        compute="_compute_sale_total", string="Total Sales", currency_field="currency_id"
+        compute="_compute_sale_total", string="Total Sales", currency_field="currency_id", store=False
     )
     
     invoice_ids = fields.One2many(
@@ -137,47 +137,11 @@ class SalesTarget(models.Model):
     # COMPUTE METHODS
     # ======================
 
-    @api.depends('target_amount', 'salesperson_id', 'start_date', 'end_date', 'target_point')
-    def _compute_achievement(self):
-
-        for record in self:
-            total_sales = 0
-            if record.salesperson_id and record.start_date and record.end_date:
-                if record.target_point == 'so_confirm':
-                    orders = self.env['sale.order'].search([
-                        ('user_id', '=', record.salesperson_id.id),
-                        ('state', 'in', ['sale', 'done']),
-                        ('date_order', '>=', record.start_date),
-                        ('date_order', '<=', record.end_date),
-                    ])
-                    total_sales = sum(orders.mapped('amount_total'))
-
-                elif record.target_point == 'invoice_validation':
-                    invoices = self.env['account.move'].search([
-                        ('invoice_user_id', '=', record.salesperson_id.id),
-                        ('state', '=', 'posted'),
-                        ('payment_state', '!=', 'paid'),
-                        ('invoice_date', '>=', record.start_date),
-                        ('invoice_date', '<=', record.end_date),
-                    ])
-                    total_sales = sum(invoices.mapped('amount_total'))
-
-                elif record.target_point == 'invoice_paid':
-                    invoices = self.env['account.move'].search([
-                        ('invoice_user_id', '=', record.salesperson_id.id),
-                        ('payment_state', '=', 'paid'),
-                        ('invoice_date', '>=', record.start_date),
-                        ('invoice_date', '<=', record.end_date),
-                    ])
-                    total_sales = sum(invoices.mapped('amount_total'))
-
-            record.achievement_amount = total_sales
-            record.achievement_percent = (total_sales / record.target_amount * 100) if record.target_amount else 0
-
-    @api.depends("order_ids.amount_total")
+    @api.depends('order_ids.amount_total')
     def _compute_sale_total(self):
         for rec in self:
-            rec.sale_total = sum(rec.order_ids.mapped("amount_total"))
+            rec.sale_total = sum(rec.order_ids.mapped('amount_total'))
+
     
     @api.depends("invoice_ids.amount_total")
     def _compute_invoice_total(self):
@@ -186,12 +150,15 @@ class SalesTarget(models.Model):
     
     @api.depends('target_amount', 'achievement_amount')
     def _compute_difference(self):
-        for record in self:
-            record.difference_amount = record.target_amount - record.achievement_amount
+        for rec in self:
+            rec.difference_amount = rec.target_amount - rec.achievement_amount
             
     @api.depends('target_point', 'salesperson_id', 'start_date', 'end_date')
     def _compute_invoice_ids(self):
         for rec in self:
+            if not (rec.salesperson_id and rec.start_date and rec.end_date):
+                rec.invoice_ids = False
+                continue
             domain = [
                 ('invoice_user_id', '=', rec.salesperson_id.id),
                 ('invoice_date', '>=', rec.start_date),
@@ -205,33 +172,44 @@ class SalesTarget(models.Model):
 
             invoices = self.env['account.move'].search(domain)
             rec.invoice_ids = invoices
+    @api.depends('target_amount', 'order_ids', 'invoice_ids', 'target_point')
+    def _compute_achievement(self):
+        """Tính tổng achievement dựa trên target_point"""
+        for rec in self:
+            total = 0
+            if rec.target_point == 'so_confirm':
+                total = rec.sale_total
+            else:
+                total = rec.invoice_total
+
+            rec.achievement_amount = total
+            rec.achievement_percent = (total / rec.target_amount * 100) if rec.target_amount else 0
 
     def _compute_theoretical(self):
-        """Tính Theoretical Achievement dựa trên ngày hiện tại"""
+        """Tính theoretical achievement theo tiến độ ngày"""
         today = date.today()
-        for record in self:
-            record.theoretical_amount = 0
-            record.theoretical_percent = 0
-            record.theoretical_status = 'completed'
+        for rec in self:
+            rec.theoretical_amount = 0
+            rec.theoretical_percent = 0
+            rec.theoretical_status = 'completed'
 
-            if record.start_date and record.end_date and record.target_amount:
-                if record.start_date <= today <= record.end_date:
-                    total_days = (record.end_date - record.start_date).days + 1
-                    current_day = (today - record.start_date).days + 1
+            if rec.start_date and rec.end_date and rec.target_amount:
+                if rec.start_date <= today <= rec.end_date:
+                    total_days = (rec.end_date - rec.start_date).days + 1
+                    current_day = (today - rec.start_date).days + 1
 
-                    theoretical_amount = (record.target_amount / total_days) * current_day
-                    theoretical_percent = (theoretical_amount * 100) / record.target_amount
+                    theo_amount = (rec.target_amount / total_days) * current_day
+                    theo_percent = (theo_amount * 100) / rec.target_amount
 
-                    record.theoretical_amount = theoretical_amount
-                    record.theoretical_percent = theoretical_percent
+                    rec.theoretical_amount = theo_amount
+                    rec.theoretical_percent = theo_percent
 
-                    if record.achievement_amount > theoretical_amount:
-                        record.theoretical_status = 'above'
+                    if rec.achievement_amount > theo_amount:
+                        rec.theoretical_status = 'above'
                     else:
-                        record.theoretical_status = 'below'
+                        rec.theoretical_status = 'below'
                 else:
-                    record.theoretical_status = 'completed'
-
+                    rec.theoretical_status = 'completed'
     # ======================
     # CONSTRAINTS
     # ======================
@@ -287,22 +265,29 @@ class SalesTarget(models.Model):
                 'achievement_percent': (new_amount / target.target_amount * 100) if target.target_amount else 0,
             })
 
+    @api.depends('target_point', 'salesperson_id', 'start_date', 'end_date')
     def _compute_sale_orders(self):
+        """Filter Sale Orders theo thời gian và salesperson"""
         for rec in self:
-            orders = self.env['sale.order'].search([
+            if not (rec.salesperson_id and rec.start_date and rec.end_date):
+                rec.order_ids = False
+                continue
+
+            rec.order_ids = self.env['sale.order'].search([
                 ('user_id', '=', rec.salesperson_id.id),
                 ('date_order', '>=', rec.start_date),
                 ('date_order', '<=', rec.end_date),
                 ('state', 'in', ['sale', 'done'])
             ])
-            rec.order_ids = orders
+            return rec.order_ids
+
     def action_confirm(self):
 
         for record in self:
             record.name = self.env['ir.sequence'].next_by_code('sales.target') or "New"
             record.state = 'open'
 
-    def action_close(self):
+    def action_close(self): 
 
         for record in self:
             record.state = 'closed'

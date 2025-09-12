@@ -93,7 +93,7 @@
                                     <field name="date_order"/>
                                     <field name="partner_id"/>
                                     <field name="company_id"/>
-                                    <field name="amount_total"/>
+                                    <field name="amount_total" sum="amount_total"/>
                                     <field name="state"/>
                                 </list>
                             </field>
