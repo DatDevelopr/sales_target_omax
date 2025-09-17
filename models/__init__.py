@@ -4,5 +4,6 @@ from . import sales_person_target
 from . import effective_date
 from . import sales_team_target
 from . import sales_order
+from . import sales_team_target_inherit
 
 

@@ -7,12 +7,28 @@ class SaleOrder(models.Model):
         'sales.target',
         string="Sales Target"
     )
-    sales_team_target_id = fields.Many2one('sales.team.target', string="Sales Team Target")
 
-    def action_confirm(self):
-        res = super().action_confirm()
+    def action_confirm(self, *args, **kwargs):
+        # Gọi super đúng cách với args/kwargs
+        res = super(SaleOrder, self).action_confirm(*args, **kwargs)
+
         for order in self:
-            self.env['sales.target'].sudo()._update_achievement(order, 'so_confirm')
+            # Nếu chưa có sales_team_target_id thì tìm và gán
+            if not order.sales_team_target_id and order.team_id and order.date_order:
+                target = self.env['sales.team.target'].search([
+                    ('team_id', '=', order.team_id.id),
+                    ('state', '=', 'open'),
+                    ('start_date', '<=', order.date_order),
+                    ('end_date', '>=', order.date_order),
+                    ('target_point', '=', 'so_confirm'),
+                ], limit=1)
+                if target:
+                    order.sales_team_target_id = target.id
+
+            # Cập nhật achievement của target
+            if order.sales_team_target_id:
+                order.sales_team_target_id.sudo()._update_achievement(order, 'so_confirm')
+
         return res
 
     @api.model

@@ -85,15 +85,46 @@
                             <field name="achievement_percentage" widget="percentpie" readonly="1"/>
                         </group>
                     </group>
-
+                    <group>
+                        <field name="theoretical_achievement"/>
+                        <field name="theoretical_percentage" widget="percentpie"/>
+                        <field name="theoretical_status"/>
+                    </group>
                     <notebook>
-                        <page string="Theoretical Data">
+                        <page string="Sales Orders" invisible="target_point != 'so_confirm'">
+                            <field name="order_ids" readonly="1" create="false" edit="false" delete="false">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date_order"/>
+                                    <field name="partner_id"/>
+                                    <field name="company_id"/>
+                                    <field name="amount_total" sum="amount_total"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
                             <group>
-                                <field name="theoretical_achievement"/>
-                                <field name="theoretical_percentage" widget="percentpie"/>
-                                <field name="theoretical_status"/>
+                                <field name="sale_total" readonly="1"/>
                             </group>
                         </page>
+
+                        <page string="Invoices" 
+                            invisible="target_point not in ('invoice_validation','invoice_paid')">
+                            <field name="invoice_ids" readonly="1" create="false" edit="false" delete="false">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="invoice_date"/>
+                                    <field name="amount_untaxed"/>
+                                    <field name="amount_total"/>
+                                    <field name="payment_state"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                            <group>
+                                <field name="invoice_total" readonly="1"/>
+                            </group>
+                        </page>
+                    
                     </notebook>
                 </sheet>
             </form>
